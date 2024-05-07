@@ -16,8 +16,8 @@ const HANDLE driver_handle = CreateFileW(L"\\\\.\\TSCDriver", GENERIC_READ | GEN
   FILE_ATTRIBUTE_NORMAL, nullptr);
 
 if (driver::attach_to_process(driver_handle, pid)) {
-		std::cout << "[+] Attached to process" << std::endl;
-	}
+	std::cout << "[+] Attached to process" << std::endl;
+}
 ```
 
 ## Example Userland Client
