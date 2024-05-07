@@ -6,6 +6,8 @@ If you're here, you probably know what you're doing.
 
 The driver is registered with the name "TSCDriver," but you can modify this in the source code if necessary.
 
+Using any Kernel Driver mapper can work, such as kdmapper.
+
 ## Getting the Driver Handle
 Use the following code snippet to obtain the driver handle:
 ```cpp
