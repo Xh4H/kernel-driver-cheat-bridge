@@ -1,26 +1,24 @@
 ;
-; driver.inf
+; TSCDriver.inf - WDM kernel driver installation
 ;
 
 [Version]
 Signature="$WINDOWS NT$"
-Class=System ; TODO: specify appropriate Class
-ClassGuid={4d36e97d-e325-11ce-bfc1-08002be10318} ; TODO: specify appropriate ClassGuid
+Class=System
+ClassGuid={4d36e97d-e325-11ce-bfc1-08002be10318}
 Provider=%ManufacturerName%
-CatalogFile=driver.cat
-DriverVer= ; TODO: set DriverVer in stampinf property pages
+CatalogFile=TSCDriver.cat
+DriverVer=06/10/2026,1.0.0.0
 PnpLockdown=1
 
 [DestinationDirs]
 DefaultDestDir = 12
-driver_Device_CoInstaller_CopyFiles = 11
 
 [SourceDisksNames]
 1 = %DiskName%,,,""
 
 [SourceDisksFiles]
-driver.sys  = 1,,
-WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll=1 ; make sure the number matches with SourceDisksNames
+TSCDriver.sys = 1,,
 
 ;*****************************************
 ; Install Section
@@ -30,48 +28,28 @@ WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll=1 ; make sure the number matches with
 %ManufacturerName%=Standard,NT$ARCH$
 
 [Standard.NT$ARCH$]
-%driver.DeviceDesc%=driver_Device, Root\driver ; TODO: edit hw-id
+%TSCDriver.DeviceDesc%=TSCDriver_Device, Root\TSCDriver
 
-[driver_Device.NT]
+[TSCDriver_Device.NT]
 CopyFiles=Drivers_Dir
 
 [Drivers_Dir]
-driver.sys
+TSCDriver.sys
 
 ;-------------- Service installation
-[driver_Device.NT.Services]
-AddService = driver,%SPSVCINST_ASSOCSERVICE%, driver_Service_Inst
+[TSCDriver_Device.NT.Services]
+AddService = TSCDriver,%SPSVCINST_ASSOCSERVICE%, TSCDriver_Service_Inst
 
-; -------------- driver driver install sections
-[driver_Service_Inst]
-DisplayName    = %driver.SVCDESC%
+[TSCDriver_Service_Inst]
+DisplayName    = %TSCDriver.SVCDESC%
 ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
 StartType      = 3               ; SERVICE_DEMAND_START
 ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
-ServiceBinary  = %12%\driver.sys
-
-;
-;--- driver_Device Coinstaller installation ------
-;
-
-[driver_Device.NT.CoInstallers]
-AddReg=driver_Device_CoInstaller_AddReg
-CopyFiles=driver_Device_CoInstaller_CopyFiles
-
-[driver_Device_CoInstaller_AddReg]
-HKR,,CoInstallers32,0x00010000, "WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll,WdfCoInstaller"
-
-[driver_Device_CoInstaller_CopyFiles]
-WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll
-
-[driver_Device.NT.Wdf]
-KmdfService =  driver, driver_wdfsect
-[driver_wdfsect]
-KmdfLibraryVersion = $KMDFVERSION$
+ServiceBinary  = %12%\TSCDriver.sys
 
 [Strings]
-SPSVCINST_ASSOCSERVICE= 0x00000002
-ManufacturerName="<Your manufacturer name>" ;TODO: Replace with your manufacturer name
-DiskName = "driver Installation Disk"
-driver.DeviceDesc = "driver Device"
-driver.SVCDESC = "driver Service"
+SPSVCINST_ASSOCSERVICE = 0x00000002
+ManufacturerName       = "TSCDriver"
+DiskName               = "TSCDriver Installation Disk"
+TSCDriver.DeviceDesc   = "TSCDriver Device"
+TSCDriver.SVCDESC      = "TSCDriver Service"

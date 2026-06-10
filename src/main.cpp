@@ -3,12 +3,6 @@
 
 extern "C" {
     NTKERNELAPI NTSTATUS
-    IoCreateDriver(
-        _In_ PUNICODE_STRING DriverName,
-        _In_ PDRIVER_INITIALIZE InitializationFunction
-    );
-
-    NTKERNELAPI NTSTATUS
     MmCopyVirtualMemory(
         _In_  PEPROCESS SourceProcess,
         _In_  PVOID     SourceAddress,
@@ -77,22 +71,23 @@ namespace driver {
     NTSTATUS HandleReadWrite(
         PEPROCESS srcProc, PEPROCESS dstProc,
         PVOID src, PVOID dst,
-        SIZE_T size, PSIZE_T outSize,
-        BOOLEAN isRead
+        SIZE_T size, PSIZE_T outSize
     ) {
-        // Validate user-mode pointers if necessary (for METHOD_NEITHER)
-        if (isRead) {
-            ProbeForWrite(dst, size, sizeof(UCHAR));
-        } else {
-            ProbeForRead(src, size, sizeof(UCHAR));
+        NTSTATUS status = STATUS_UNSUCCESSFUL;
+
+        __try {
+            status = MmCopyVirtualMemory(
+                srcProc, src,
+                dstProc, dst,
+                size, KernelMode,
+                outSize
+            );
+        }
+        __except (EXCEPTION_EXECUTE_HANDLER) {
+            status = GetExceptionCode();
         }
 
-        return MmCopyVirtualMemory(
-            srcProc, src,
-            dstProc, dst,
-            size, KernelMode,
-            outSize
-        );
+        return status;
     }
 
     NTSTATUS device_control(PDEVICE_OBJECT /*device*/, PIRP irp) {
@@ -152,11 +147,12 @@ namespace driver {
             status = HandleReadWrite(
                 srcProc, dstProc,
                 srcAddr, dstAddr,
-                req->size, &bytesTransferred,
-                isRead
+                req->size, &bytesTransferred
             );
 
-            if (!NT_SUCCESS(status)) {
+            if (NT_SUCCESS(status)) {
+                req->return_size = bytesTransferred;
+            } else {
                 debug_print(isRead ? "[-] Read failed" : "[-] Write failed");
             }
             break;
@@ -184,8 +180,8 @@ VOID DriverUnload(PDRIVER_OBJECT DriverObject) {
     debug_print("[+] Driver unloaded");
 }
 
-// Main initialization: create device, symlink, set dispatch routines
-NTSTATUS driver_main(PDRIVER_OBJECT DriverObject, PUNICODE_STRING /*RegistryPath*/) {
+// Entry point
+extern "C" NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING /*RegistryPath*/) {
     UNICODE_STRING devName = RTL_CONSTANT_STRING(L"\\Device\\TSCDriver");
     PDEVICE_OBJECT deviceObject = nullptr;
     NTSTATUS status = IoCreateDevice(
@@ -224,11 +220,4 @@ NTSTATUS driver_main(PDRIVER_OBJECT DriverObject, PUNICODE_STRING /*RegistryPath
     debug_print("[+] Driver initialized");
 
     return STATUS_SUCCESS;
-}
-
-// Entry point
-extern "C" NTSTATUS DriverEntry() {
-    UNICODE_STRING name = RTL_CONSTANT_STRING(L"\\Driver\\TSCDriver");
-    debug_print("[+] DriverEntry started");
-    return IoCreateDriver(&name, driver_main);
 }
